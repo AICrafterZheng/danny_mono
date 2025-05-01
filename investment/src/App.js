@@ -44,7 +44,7 @@ const debounce = (func, wait) => {
 
 function App() {
   const [inputs, setInputs] = useState({
-    initialCapital: 500000,
+    initialCapital: 217000,
     monthlyIncome: 10000,
     purchasePrice: 1085000,
     downPaymentPercent: 0.20,
@@ -59,7 +59,7 @@ function App() {
     sellingCostPercent: 0.07,
     monthlyRent: 3500,
     stockInvestmentReturn: 0.10,
-    monthlyExpenses: 3000
+    otherMonthlyExpenses: 3570
   });
 
   const [results, setResults] = useState(null);
@@ -150,8 +150,8 @@ function App() {
               <div key={key} className="flex flex-col">
                 <label className="text-sm font-medium text-gray-700 mb-1">
                   {key === 'stockInvestmentReturn' ? 
-                    'Stock Investment Return (e.g. S&P500)' :
-                    key === 'monthlyExpenses' ?
+                    'Stock Investment Return (e.g. S&P 500)' :
+                    key === 'otherMonthlyExpenses' ?
                     'Other Monthly Expenses (e.g. Utilities, Food, Transportation, Entertainment)' :
                     key
                       .replace(/([A-Z])/g, ' $1')
@@ -188,6 +188,13 @@ function App() {
               <div className="bg-white rounded-lg shadow p-6">
                 <h2 className="text-xl font-semibold mb-4">House + Stock Investment</h2>
                 <div className="space-y-6">
+                  <div className="pb-4 border-b">
+                    <CalcDetail 
+                      label="Total Net Worth"
+                      value={results.house_scenario.total_net_worth}
+                      calculation={`House Equity (${formatCurrency(results.house_scenario.housing_results.buy_and_sell.equity_gain)}) + Remaining Capital Future Value (${formatCurrency(results.house_scenario.remaining_capital_investment.future_value)}) + Income Investment Future Value (${formatCurrency(results.house_scenario.income_investment.savings.investment_value)})`}
+                    />
+                  </div>
                   <div>
                     <h3 className="font-medium text-lg mb-3">House Investment</h3>
                     <CalcDetail 
@@ -303,15 +310,35 @@ function App() {
                           <br />&nbsp;&nbsp;• HOA: {formatCurrency(inputs.hoaMonthly)}
                           <br />&nbsp;&nbsp;• Maintenance: {formatCurrency(inputs.maintenanceMonthly)}
                           <br />&nbsp;&nbsp;• House Insurance: {formatCurrency(inputs.insuranceMonthly)}
-                          <br />Other Monthly Expenses (e.g. Utilities, Food, Transportation, Entertainment): {formatCurrency(inputs.monthlyExpenses)}
-                          <br />Total Monthly Expenses: {formatCurrency(results.house_scenario.income_investment.inputs.monthly_expenses)}
+                          <br />Housing Related Total: {formatCurrency(
+                            results.house_scenario.housing_results.inputs.monthly_payment +
+                            results.house_scenario.housing_results.inputs.annual_property_tax / 12 +
+                            inputs.hoaMonthly +
+                            inputs.maintenanceMonthly +
+                            inputs.insuranceMonthly
+                          )}
+                          <br />Other Monthly Expenses (e.g. Utilities, Food, Transportation, Entertainment): {formatCurrency(inputs.otherMonthlyExpenses)}
                         </>
                       }
                     />
                     <CalcDetail 
                       label="Monthly Savings"
-                      value={results.house_scenario.income_investment.inputs.monthly_savings}
-                      calculation={`Monthly Income (${formatCurrency(inputs.monthlyIncome)}) - Monthly Expenses`}
+                      value={inputs.monthlyIncome - (
+                        results.house_scenario.housing_results.inputs.monthly_payment +
+                        results.house_scenario.housing_results.inputs.annual_property_tax / 12 +
+                        inputs.hoaMonthly +
+                        inputs.maintenanceMonthly +
+                        inputs.insuranceMonthly +
+                        inputs.otherMonthlyExpenses
+                      )}
+                      calculation={`Monthly Income (${formatCurrency(inputs.monthlyIncome)}) - Total Monthly Expenses (${formatCurrency(
+                        results.house_scenario.housing_results.inputs.monthly_payment +
+                        results.house_scenario.housing_results.inputs.annual_property_tax / 12 +
+                        inputs.hoaMonthly +
+                        inputs.maintenanceMonthly +
+                        inputs.insuranceMonthly +
+                        inputs.otherMonthlyExpenses
+                      )})`}
                     />
                     <CalcDetail 
                       label="Investment Future Value"
@@ -319,20 +346,20 @@ function App() {
                       calculation={`Monthly Savings invested at ${formatPercent(inputs.stockInvestmentReturn)} annual return for ${inputs.holdingPeriodYears} years`}
                     />
                   </div>
-                  <div className="pt-4 border-t">
-                    <CalcDetail 
-                      label="Total Net Worth"
-                      value={results.house_scenario.total_net_worth}
-                      calculation={`House Equity (${formatCurrency(results.house_scenario.housing_results.buy_and_sell.equity_gain)}) + Remaining Capital Future Value (${formatCurrency(results.house_scenario.remaining_capital_investment.future_value)}) + Income Investment Future Value (${formatCurrency(results.house_scenario.income_investment.savings.investment_value)})`}
-                    />
-                  </div>
                 </div>
               </div>
 
               {/* Full Stock Scenario */}
               <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold mb-4">Full Stock Investment</h2>
+                <h2 className="text-xl font-semibold mb-4">Rent + Stock Investment</h2>
                 <div className="space-y-6">
+                  <div className="pb-4 border-b">
+                    <CalcDetail 
+                      label="Total Net Worth"
+                      value={results.full_stock_scenario.total_net_worth}
+                      calculation={`Initial Investment Future Value (${formatCurrency(results.full_stock_scenario.initial_investment.future_value)}) + Income Investment Future Value (${formatCurrency(results.full_stock_scenario.income_investment.savings.investment_value)})`}
+                    />
+                  </div>
                   <div>
                     <h3 className="font-medium text-lg mb-3">Initial Investment</h3>
                     <CalcDetail 
@@ -358,10 +385,8 @@ function App() {
                       value={results.full_stock_scenario.income_investment.inputs.monthly_expenses}
                       calculation={
                         <>
-                          Housing Related:
-                          <br />&nbsp;&nbsp;• Rent: {formatCurrency(inputs.monthlyRent)}
-                          <br />Other Monthly Expenses (e.g. Utilities, Food, Transportation, Entertainment): {formatCurrency(inputs.monthlyExpenses)}
-                          <br />Total Monthly Expenses: {formatCurrency(results.full_stock_scenario.income_investment.inputs.monthly_expenses)}
+                          Housing Related (Rent): {formatCurrency(inputs.monthlyRent)}
+                          <br />Other Monthly Expenses (e.g. Utilities, Food, Transportation, Entertainment): {formatCurrency(inputs.otherMonthlyExpenses)}
                         </>
                       }
                     />
@@ -374,13 +399,6 @@ function App() {
                       label="Investment Future Value"
                       value={results.full_stock_scenario.income_investment.savings.investment_value}
                       calculation={`Monthly Savings invested at ${formatPercent(inputs.stockInvestmentReturn)} annual return for ${inputs.holdingPeriodYears} years`}
-                    />
-                  </div>
-                  <div className="pt-4 border-t">
-                    <CalcDetail 
-                      label="Total Net Worth"
-                      value={results.full_stock_scenario.total_net_worth}
-                      calculation={`Initial Investment Future Value (${formatCurrency(results.full_stock_scenario.initial_investment.future_value)}) + Income Investment Future Value (${formatCurrency(results.full_stock_scenario.income_investment.savings.investment_value)})`}
                     />
                   </div>
                 </div>

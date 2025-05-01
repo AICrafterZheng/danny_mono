@@ -55,7 +55,7 @@ export const calculateInvestmentScenarios = ({
   sellingCostPercent,
   monthlyRent,
   stockInvestmentReturn,
-  monthlyExpenses,
+  otherMonthlyExpenses,
 }) => {
   // Calculate house purchase scenario
   const downPayment = purchasePrice * downPaymentPercent;
@@ -74,12 +74,10 @@ export const calculateInvestmentScenarios = ({
   const totalInsurance = insuranceMonthly * totalMonths;
   const remainingBalance = calculateRemainingPrincipal(loanAmount, loanInterestRate, loanTermYears, totalMonths);
   const sellingCosts = salePrice * sellingCostPercent;
-
-  // Calculate total monthly expenses for both scenarios
-  const otherMonthlyExpenses = Object.values(monthlyExpenses).reduce((sum, expense) => sum + expense, 0);
   
+  // Calculate total monthly expenses for both scenarios
   const houseMonthlyExpenses = monthlyPayment + monthlyPropertyTax + hoaMonthly + maintenanceMonthly + insuranceMonthly + otherMonthlyExpenses;
-  const rentMonthlyExpenses = monthlyRent + maintenanceMonthly + insuranceMonthly + otherMonthlyExpenses;
+  const rentMonthlyExpenses = monthlyRent + otherMonthlyExpenses;
   
   // House scenario calculations
   const houseCosts = totalMortgagePayments + totalPropertyTax + totalHoa + totalMaintenance + totalInsurance;
