@@ -58,7 +58,8 @@ function App() {
     salePrice: 1400000,
     sellingCostPercent: 0.07,
     monthlyRent: 3500,
-    stockInvestmentReturn: 0.10,
+    imputedRent: 3500,
+    stockInvestmentReturnPercent: 0.10,
     otherMonthlyExpenses: 3570
   });
 
@@ -149,10 +150,14 @@ function App() {
             {Object.entries(inputs).map(([key, value]) => (
               <div key={key} className="flex flex-col">
                 <label className="text-sm font-medium text-gray-700 mb-1">
-                  {key === 'stockInvestmentReturn' ? 
-                    'Stock Investment Return (e.g. S&P 500)' :
+                  {key === 'stockInvestmentReturnPercent' ? 
+                    'Stock Investment Return Percent (e.g. S&P 500)' :
                     key === 'otherMonthlyExpenses' ?
                     'Other Monthly Expenses (e.g. Utilities, Food, Transportation, Entertainment)' :
+                    key === 'imputedRent' ?
+                    'Imputed Rent (Monthly rental value if you owned the house)' :
+                    key === 'monthlyRent' ?
+                    'Monthly Rent (What you would pay to rent)' :
                     key
                       .replace(/([A-Z])/g, ' $1')
                       .split(' ')
@@ -160,7 +165,7 @@ function App() {
                       .join(' ')
                       .trim()
                   }
-                  {(key.includes('Percent') || key === 'loanInterestRate' || key === 'stockInvestmentReturn') && ' (%)'}
+                  {(key.includes('Percent') || key === 'loanInterestRate' || key === 'stockInvestmentReturnPercent') && ' (%)'}
                   {key === 'initialCapital' && (
                     <span className="text-xs text-gray-500 ml-1">
                       (min: {formatCurrency(inputs.purchasePrice * inputs.downPaymentPercent)})
@@ -262,8 +267,8 @@ function App() {
                       value={results.house_scenario.housing_results.buy_and_sell.total_benefit}
                       calculation={
                         <>
-                          Equity ({formatCurrency(results.house_scenario.housing_results.buy_and_sell.equity_gain)})
-                          <br />+ Rent Savings ({formatCurrency(inputs.monthlyRent)} × {inputs.holdingPeriodYears * 12} months = {formatCurrency(inputs.monthlyRent * inputs.holdingPeriodYears * 12)})
+                          Equity Gain: {formatCurrency(results.house_scenario.housing_results.buy_and_sell.equity_gain)}
+                          <br />+ Imputed Rent Savings ({formatCurrency(results.house_scenario.housing_results.inputs.imputed_rent)} × {inputs.holdingPeriodYears * 12} months = {formatCurrency(results.house_scenario.housing_results.buy_and_sell.rent_savings)})
                           <br />- Total Housing Costs ({formatCurrency(
                             calculateMortgagePayment(
                               inputs.purchasePrice * (1 - inputs.downPaymentPercent),
@@ -275,7 +280,9 @@ function App() {
                             inputs.maintenanceMonthly * inputs.holdingPeriodYears * 12 +
                             inputs.insuranceMonthly * inputs.holdingPeriodYears * 12
                           )})
+                          <br />= Total Benefit: {formatCurrency(results.house_scenario.housing_results.buy_and_sell.total_benefit)}
                         </>
+                        
                       }
                     />
                   </div>
@@ -289,7 +296,7 @@ function App() {
                     <CalcDetail 
                       label="Future Value"
                       value={results.house_scenario.remaining_capital_investment.future_value}
-                      calculation={`Initial Amount (${formatCurrency(results.house_scenario.remaining_capital_investment.amount)}) × (1 + ${formatPercent(inputs.stockInvestmentReturn)})^${inputs.holdingPeriodYears} years`}
+                      calculation={`Initial Amount (${formatCurrency(results.house_scenario.remaining_capital_investment.amount)}) × (1 + ${formatPercent(inputs.stockInvestmentReturnPercent)})^${inputs.holdingPeriodYears} years`}
                     />
                     <CalcDetail 
                       label="Investment Gain"
@@ -304,19 +311,18 @@ function App() {
                       value={results.house_scenario.income_investment.inputs.monthly_expenses}
                       calculation={
                         <>
-                          Housing Related:
-                          <br />&nbsp;&nbsp;• Mortgage Payment: {formatCurrency(results.house_scenario.housing_results.inputs.monthly_payment)}
-                          <br />&nbsp;&nbsp;• Property Tax (Monthly): {formatCurrency(results.house_scenario.housing_results.inputs.annual_property_tax / 12)}
-                          <br />&nbsp;&nbsp;• HOA: {formatCurrency(inputs.hoaMonthly)}
-                          <br />&nbsp;&nbsp;• Maintenance: {formatCurrency(inputs.maintenanceMonthly)}
-                          <br />&nbsp;&nbsp;• House Insurance: {formatCurrency(inputs.insuranceMonthly)}
-                          <br />Housing Related Total: {formatCurrency(
+                          Housing Related: {formatCurrency(
                             results.house_scenario.housing_results.inputs.monthly_payment +
                             results.house_scenario.housing_results.inputs.annual_property_tax / 12 +
                             inputs.hoaMonthly +
                             inputs.maintenanceMonthly +
                             inputs.insuranceMonthly
                           )}
+                          <br />&nbsp;&nbsp;• Mortgage Payment: {formatCurrency(results.house_scenario.housing_results.inputs.monthly_payment)}
+                          <br />&nbsp;&nbsp;• Property Tax (Monthly): {formatCurrency(results.house_scenario.housing_results.inputs.annual_property_tax / 12)}
+                          <br />&nbsp;&nbsp;• HOA: {formatCurrency(inputs.hoaMonthly)}
+                          <br />&nbsp;&nbsp;• Maintenance: {formatCurrency(inputs.maintenanceMonthly)}
+                          <br />&nbsp;&nbsp;• House Insurance: {formatCurrency(inputs.insuranceMonthly)}
                           <br />Other Monthly Expenses (e.g. Utilities, Food, Transportation, Entertainment): {formatCurrency(inputs.otherMonthlyExpenses)}
                         </>
                       }
@@ -343,7 +349,7 @@ function App() {
                     <CalcDetail 
                       label="Investment Future Value"
                       value={results.house_scenario.income_investment.savings.investment_value}
-                      calculation={`Monthly Savings invested at ${formatPercent(inputs.stockInvestmentReturn)} annual return for ${inputs.holdingPeriodYears} years`}
+                      calculation={`Monthly Savings invested at ${formatPercent(inputs.stockInvestmentReturnPercent)} annual return for ${inputs.holdingPeriodYears} years`}
                     />
                   </div>
                 </div>
@@ -370,7 +376,7 @@ function App() {
                     <CalcDetail 
                       label="Future Value"
                       value={results.full_stock_scenario.initial_investment.future_value}
-                      calculation={`Initial Amount × (1 + ${formatPercent(inputs.stockInvestmentReturn)})^${inputs.holdingPeriodYears} years`}
+                      calculation={`Initial Amount × (1 + ${formatPercent(inputs.stockInvestmentReturnPercent)})^${inputs.holdingPeriodYears} years`}
                     />
                     <CalcDetail 
                       label="Investment Gain"
@@ -398,7 +404,7 @@ function App() {
                     <CalcDetail 
                       label="Investment Future Value"
                       value={results.full_stock_scenario.income_investment.savings.investment_value}
-                      calculation={`Monthly Savings invested at ${formatPercent(inputs.stockInvestmentReturn)} annual return for ${inputs.holdingPeriodYears} years`}
+                      calculation={`Monthly Savings invested at ${formatPercent(inputs.stockInvestmentReturnPercent)} annual return for ${inputs.holdingPeriodYears} years`}
                     />
                   </div>
                 </div>

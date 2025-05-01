@@ -54,7 +54,8 @@ export const calculateInvestmentScenarios = ({
   salePrice,
   sellingCostPercent,
   monthlyRent,
-  stockInvestmentReturn,
+  imputedRent,
+  stockInvestmentReturnPercent,
   otherMonthlyExpenses,
 }) => {
   // Calculate house purchase scenario
@@ -87,11 +88,11 @@ export const calculateInvestmentScenarios = ({
   const houseTotalBenefit = houseEquityGain + rentSavings - houseCosts;  // Deduct costs here
 
   // Calculate stock returns on remaining capital
-  const remainingStockFutureValue = remainingCapital * Math.pow(1 + stockInvestmentReturn, holdingPeriodYears);
+  const remainingStockFutureValue = remainingCapital * Math.pow(1 + stockInvestmentReturnPercent, holdingPeriodYears);
   const remainingStockGain = remainingStockFutureValue - remainingCapital;
 
   // Calculate full stock investment scenario
-  const fullStockFutureValue = initialCapital * Math.pow(1 + stockInvestmentReturn, holdingPeriodYears);
+  const fullStockFutureValue = initialCapital * Math.pow(1 + stockInvestmentReturnPercent, holdingPeriodYears);
   const fullStockGain = fullStockFutureValue - initialCapital;
 
   // Calculate income investment returns using monthly contributions
@@ -111,10 +112,12 @@ export const calculateInvestmentScenarios = ({
           down_payment: downPayment,
           monthly_payment: monthlyPayment,
           annual_property_tax: annualPropertyTax,
+          imputed_rent: imputedRent,
         },
         buy_and_sell: {
           total_benefit: houseTotalBenefit,
           equity_gain: houseEquityGain,
+          rent_savings: rentSavings,
         },
       },
       remaining_capital_investment: {
@@ -131,14 +134,14 @@ export const calculateInvestmentScenarios = ({
           investment_value: calculateFutureValueWithMonthlyContributions(
             monthlyIncome - houseMonthlyExpenses,
             holdingPeriodYears,
-            stockInvestmentReturn
+            stockInvestmentReturnPercent
           ),
         },
       },
       total_net_worth: houseEquityGain + remainingStockFutureValue + calculateFutureValueWithMonthlyContributions(
         monthlyIncome - houseMonthlyExpenses,
         holdingPeriodYears,
-        stockInvestmentReturn
+        stockInvestmentReturnPercent
       ),
     },
     full_stock_scenario: {
@@ -156,14 +159,14 @@ export const calculateInvestmentScenarios = ({
           investment_value: calculateFutureValueWithMonthlyContributions(
             monthlyIncome - rentMonthlyExpenses,
             holdingPeriodYears,
-            stockInvestmentReturn
+            stockInvestmentReturnPercent
           ),
         },
       },
       total_net_worth: fullStockFutureValue + calculateFutureValueWithMonthlyContributions(
         monthlyIncome - rentMonthlyExpenses,
         holdingPeriodYears,
-        stockInvestmentReturn
+        stockInvestmentReturnPercent
       ),
     },
   };
