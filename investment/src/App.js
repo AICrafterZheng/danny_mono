@@ -87,17 +87,28 @@ function App() {
   }, [inputs]);
 
   const handleInputChange = (key, value) => {
-    if (isNaN(value)) return;
+    // Handle empty input
+    if (value === '' || value === null || value === undefined) {
+      setInputs(prev => ({
+        ...prev,
+        [key]: ''
+      }));
+      return;
+    }
+
+    // Convert to number and check if it's valid
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return;
     
     if (key === 'purchasePrice' || key === 'downPaymentPercent') {
       const newDownPayment = key === 'purchasePrice' ? 
-        value * inputs.downPaymentPercent :
-        inputs.purchasePrice * value;
+        numValue * inputs.downPaymentPercent :
+        inputs.purchasePrice * numValue;
       
       if (inputs.initialCapital < newDownPayment) {
         setInputs(prev => ({
           ...prev,
-          [key]: value,
+          [key]: numValue,
           initialCapital: newDownPayment
         }));
         return;
@@ -106,7 +117,7 @@ function App() {
 
     setInputs(prev => ({
       ...prev,
-      [key]: value,
+      [key]: numValue,
     }));
   };
 
@@ -174,9 +185,25 @@ function App() {
                 </label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step={key.includes('Percent') || key === 'loanInterestRate' ? '0.001' : '1'}
-                  value={key.includes('Percent') || key === 'loanInterestRate' ? Number((value * 100).toFixed(2)) : value}
-                  onChange={(e) => handleInputChange(key, key.includes('Percent') || key === 'loanInterestRate' ? parseFloat(e.target.value) / 100 : parseFloat(e.target.value))}
+                  value={key.includes('Percent') || key === 'loanInterestRate' ? 
+                    (value === '' ? '' : Number((value * 100).toFixed(2))) : 
+                    (value === '' ? '' : value)
+                  }
+                  onChange={(e) => {
+                    const inputValue = e.target.value;
+                    if (inputValue === '') {
+                      handleInputChange(key, '');
+                      return;
+                    }
+                    const numValue = key.includes('Percent') || key === 'loanInterestRate' 
+                      ? parseFloat(inputValue) / 100 
+                      : parseFloat(inputValue);
+                    if (!isNaN(numValue)) {
+                      handleInputChange(key, numValue);
+                    }
+                  }}
                   className={`border ${validationError && key === 'initialCapital' ? 'border-red-500' : 'border-gray-300'} rounded-md px-3 py-2`}
                   min={key === 'initialCapital' ? inputs.purchasePrice * inputs.downPaymentPercent : undefined}
                 />
@@ -208,7 +235,7 @@ function App() {
                       calculation={`Purchase Price (${formatCurrency(inputs.purchasePrice)}) × Down Payment Rate (${formatPercent(inputs.downPaymentPercent)})`}
                     />
                     <CalcDetail 
-                      label="Monthly Payment"
+                      label="Monthly Mortgage Payment"
                       value={results.house_scenario.housing_results.inputs.monthly_payment}
                       calculation={`Based on: Loan Amount (${formatCurrency(inputs.purchasePrice - results.house_scenario.housing_results.inputs.down_payment)}), Interest Rate (${formatPercent(inputs.loanInterestRate)}), Term (${inputs.loanTermYears} years)`}
                     />

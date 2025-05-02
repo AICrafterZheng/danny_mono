@@ -11,3 +11,5 @@ https://www.calculator.net/mortgage-calculator.html
 用一致的折现/复利假设：无论是房租节省还是股市收益，都用同一时间价值假设折算，否则比较会失衡。
 
 简单记忆：“算投资回报，看价格差；算买租优劣，加租金差。”
+
+S&P 500 Stock Investment Return Percent?
