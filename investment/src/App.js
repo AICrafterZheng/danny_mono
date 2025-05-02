@@ -60,7 +60,8 @@ function App() {
     monthlyRent: 3500,
     imputedRent: 3500,
     stockInvestmentReturnPercent: 0.10,
-    otherMonthlyExpenses: 3570
+    otherMonthlyExpenses: 3570,
+    capitalGainsTaxPercent: 0.20
   });
 
   const [results, setResults] = useState(null);
@@ -222,9 +223,14 @@ function App() {
                 <div className="space-y-6">
                   <div className="pb-4 border-b">
                     <CalcDetail 
-                      label="Total Net Worth"
+                      label="Total Net Worth (After Tax)"
                       value={results.house_scenario.total_net_worth}
-                      calculation={`House Equity (${formatCurrency(results.house_scenario.housing_results.buy_and_sell.equity_gain)}) + Remaining Capital Future Value (${formatCurrency(results.house_scenario.remaining_capital_investment.future_value)}) + Income Investment Future Value (${formatCurrency(results.house_scenario.income_investment.savings.investment_value)})`}
+                      calculation={`House Equity (${formatCurrency(results.house_scenario.housing_results.buy_and_sell.equity_gain)}) 
+                        - House Capital Gains Tax (${formatCurrency(results.house_scenario.housing_results.buy_and_sell.capital_gains_tax)})
+                        + Remaining Capital Future Value (${formatCurrency(results.house_scenario.remaining_capital_investment.future_value)})
+                        - Stock Capital Gains Tax (${formatCurrency(results.house_scenario.remaining_capital_investment.capital_gains_tax)})
+                        + Income Investment Future Value (${formatCurrency(results.house_scenario.income_investment.savings.investment_value)})
+                        - Income Investment Capital Gains Tax (${formatCurrency(results.house_scenario.income_investment.savings.capital_gains_tax)})`}
                     />
                   </div>
                   <div>
@@ -245,20 +251,24 @@ function App() {
                       calculation={`Purchase Price (${formatCurrency(inputs.purchasePrice)}) × Tax Rate (${formatPercent(inputs.propertyTaxPercent)})`}
                     />
                     <CalcDetail 
-                      label="Equity"
+                      label="Equity Gain"
                       value={results.house_scenario.housing_results.buy_and_sell.equity_gain}
-                      calculation={
-                        <>
-                          Sale Price ({formatCurrency(inputs.salePrice)})
-                          <br />- Selling Costs ({formatPercent(inputs.sellingCostPercent)}: {formatCurrency(inputs.salePrice * inputs.sellingCostPercent)})
-                          <br />- Remaining Loan Balance: {formatCurrency(calculateRemainingPrincipal(
-                            inputs.purchasePrice * (1 - inputs.downPaymentPercent),
-                            inputs.loanInterestRate,
-                            inputs.loanTermYears,
-                            inputs.holdingPeriodYears * 12
-                          ))}
-                        </>
-                      }
+                      calculation={`Sale Price (${formatCurrency(inputs.salePrice)}) - Selling Costs (${formatCurrency(inputs.salePrice * inputs.sellingCostPercent)}) - Remaining Loan Balance - Down Payment`}
+                    />
+                    <CalcDetail 
+                      label="Home Sale Exclusion"
+                      value={results.house_scenario.housing_results.buy_and_sell.tax_exemption}
+                      calculation={`Married couple's tax-free gain (up to $500,000)`}
+                    />
+                    <CalcDetail 
+                      label="Taxable Gain"
+                      value={results.house_scenario.housing_results.buy_and_sell.taxable_gain}
+                      calculation={`Equity Gain (${formatCurrency(results.house_scenario.housing_results.buy_and_sell.equity_gain)}) - Home Sale Exclusion (${formatCurrency(results.house_scenario.housing_results.buy_and_sell.tax_exemption)})`}
+                    />
+                    <CalcDetail 
+                      label="Capital Gains Tax"
+                      value={results.house_scenario.housing_results.buy_and_sell.capital_gains_tax}
+                      calculation={`Taxable Gain (${formatCurrency(results.house_scenario.housing_results.buy_and_sell.taxable_gain)}) × Long-term Capital Gains Tax Rate (based on income)`}
                     />
                     <CalcDetail 
                       label="Total Housing Costs"
@@ -321,14 +331,24 @@ function App() {
                       calculation={`Initial Capital (${formatCurrency(inputs.initialCapital)}) - Down Payment (${formatCurrency(results.house_scenario.housing_results.inputs.down_payment)})`}
                     />
                     <CalcDetail 
-                      label="Future Value"
-                      value={results.house_scenario.remaining_capital_investment.future_value}
-                      calculation={`Initial Amount (${formatCurrency(results.house_scenario.remaining_capital_investment.amount)}) × (1 + ${formatPercent(inputs.stockInvestmentReturnPercent)})^${inputs.holdingPeriodYears} years`}
-                    />
-                    <CalcDetail 
                       label="Investment Gain"
                       value={results.house_scenario.remaining_capital_investment.gain}
-                      calculation={`Future Value - Initial Amount`}
+                      calculation={`Future Value Before Tax - Initial Amount`}
+                    />
+                    <CalcDetail 
+                      label="Capital Gains Tax Rate"
+                      value={results.house_scenario.remaining_capital_investment.tax_rate}
+                      calculation={`Long-term capital gains tax rate based on annual income (${formatCurrency(inputs.monthlyIncome * 12)})`}
+                    />
+                    <CalcDetail 
+                      label="Capital Gains Tax"
+                      value={results.house_scenario.remaining_capital_investment.capital_gains_tax}
+                      calculation={`Investment Gain (${formatCurrency(results.house_scenario.remaining_capital_investment.gain)}) × Tax Rate (${formatPercent(results.house_scenario.remaining_capital_investment.tax_rate)})`}
+                    />
+                    <CalcDetail 
+                      label="Future Value (After Tax)"
+                      value={results.house_scenario.remaining_capital_investment.future_value}
+                      calculation={`Initial Amount (${formatCurrency(results.house_scenario.remaining_capital_investment.amount)}) × (1 + ${formatPercent(inputs.stockInvestmentReturnPercent)})^${inputs.holdingPeriodYears} years - Capital Gains Tax`}
                     />
                   </div>
                   <div>
@@ -374,9 +394,24 @@ function App() {
                       )})`}
                     />
                     <CalcDetail 
-                      label="Investment Future Value"
+                      label="Total Investment Gain"
+                      value={results.house_scenario.income_investment.savings.gain}
+                      calculation={`Future Value Before Tax - Total Contributions`}
+                    />
+                    <CalcDetail 
+                      label="Capital Gains Tax Rate"
+                      value={results.house_scenario.income_investment.savings.tax_rate}
+                      calculation={`Long-term capital gains tax rate based on annual income (${formatCurrency(inputs.monthlyIncome * 12)})`}
+                    />
+                    <CalcDetail 
+                      label="Capital Gains Tax"
+                      value={results.house_scenario.income_investment.savings.capital_gains_tax}
+                      calculation={`Investment Gain (${formatCurrency(results.house_scenario.income_investment.savings.gain)}) × Tax Rate (${formatPercent(results.house_scenario.income_investment.savings.tax_rate)})`}
+                    />
+                    <CalcDetail 
+                      label="Investment Future Value (After Tax)"
                       value={results.house_scenario.income_investment.savings.investment_value}
-                      calculation={`Monthly Savings invested at ${formatPercent(inputs.stockInvestmentReturnPercent)} annual return for ${inputs.holdingPeriodYears} years`}
+                      calculation={`Future Value - Capital Gains Tax`}
                     />
                   </div>
                 </div>
@@ -388,9 +423,12 @@ function App() {
                 <div className="space-y-6">
                   <div className="pb-4 border-b">
                     <CalcDetail 
-                      label="Total Net Worth"
+                      label="Total Net Worth (After Tax)"
                       value={results.full_stock_scenario.total_net_worth}
-                      calculation={`Initial Investment Future Value (${formatCurrency(results.full_stock_scenario.initial_investment.future_value)}) + Income Investment Future Value (${formatCurrency(results.full_stock_scenario.income_investment.savings.investment_value)})`}
+                      calculation={`Initial Investment Future Value (${formatCurrency(results.full_stock_scenario.initial_investment.future_value)})
+                        - Initial Investment Capital Gains Tax (${formatCurrency(results.full_stock_scenario.initial_investment.capital_gains_tax)})
+                        + Income Investment Future Value (${formatCurrency(results.full_stock_scenario.income_investment.savings.investment_value)})
+                        - Income Investment Capital Gains Tax (${formatCurrency(results.full_stock_scenario.income_investment.savings.capital_gains_tax)})`}
                     />
                   </div>
                   <div>
@@ -401,14 +439,24 @@ function App() {
                       calculation={`Full Initial Capital (${formatCurrency(inputs.initialCapital)})`}
                     />
                     <CalcDetail 
-                      label="Future Value"
-                      value={results.full_stock_scenario.initial_investment.future_value}
-                      calculation={`Initial Amount × (1 + ${formatPercent(inputs.stockInvestmentReturnPercent)})^${inputs.holdingPeriodYears} years`}
-                    />
-                    <CalcDetail 
                       label="Investment Gain"
                       value={results.full_stock_scenario.initial_investment.gain}
-                      calculation={`Future Value - Initial Amount`}
+                      calculation={`Future Value Before Tax - Initial Amount`}
+                    />
+                    <CalcDetail 
+                      label="Capital Gains Tax Rate"
+                      value={results.full_stock_scenario.initial_investment.tax_rate}
+                      calculation={`Long-term capital gains tax rate based on annual income (${formatCurrency(inputs.monthlyIncome * 12)})`}
+                    />
+                    <CalcDetail 
+                      label="Capital Gains Tax"
+                      value={results.full_stock_scenario.initial_investment.capital_gains_tax}
+                      calculation={`Investment Gain (${formatCurrency(results.full_stock_scenario.initial_investment.gain)}) × Tax Rate (${formatPercent(results.full_stock_scenario.initial_investment.tax_rate)})`}
+                    />
+                    <CalcDetail 
+                      label="Future Value (After Tax)"
+                      value={results.full_stock_scenario.initial_investment.future_value}
+                      calculation={`Initial Amount × (1 + ${formatPercent(inputs.stockInvestmentReturnPercent)})^${inputs.holdingPeriodYears} years - Capital Gains Tax`}
                     />
                   </div>
                   <div>
@@ -429,9 +477,24 @@ function App() {
                       calculation={`Monthly Income (${formatCurrency(inputs.monthlyIncome)}) - Monthly Expenses`}
                     />
                     <CalcDetail 
-                      label="Investment Future Value"
+                      label="Total Investment Gain"
+                      value={results.full_stock_scenario.income_investment.savings.gain}
+                      calculation={`Future Value Before Tax - Total Contributions`}
+                    />
+                    <CalcDetail 
+                      label="Capital Gains Tax Rate"
+                      value={results.full_stock_scenario.income_investment.savings.tax_rate}
+                      calculation={`Long-term capital gains tax rate based on annual income (${formatCurrency(inputs.monthlyIncome * 12)})`}
+                    />
+                    <CalcDetail 
+                      label="Capital Gains Tax"
+                      value={results.full_stock_scenario.income_investment.savings.capital_gains_tax}
+                      calculation={`Investment Gain (${formatCurrency(results.full_stock_scenario.income_investment.savings.gain)}) × Tax Rate (${formatPercent(results.full_stock_scenario.income_investment.savings.tax_rate)})`}
+                    />
+                    <CalcDetail 
+                      label="Investment Future Value (After Tax)"
                       value={results.full_stock_scenario.income_investment.savings.investment_value}
-                      calculation={`Monthly Savings invested at ${formatPercent(inputs.stockInvestmentReturnPercent)} annual return for ${inputs.holdingPeriodYears} years`}
+                      calculation={`Future Value - Capital Gains Tax`}
                     />
                   </div>
                 </div>
