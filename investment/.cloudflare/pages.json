@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "name": "investment-calculator",
+  "build": {
+    "command": "npm run build",
+    "output_dir": "build",
+    "root_dir": "/"
+  },
+  "routes": [
+    {
+      "pattern": "/**/*",
+      "serve": "build/index.html",
+      "status": 200
+    }
+  ]
+} 
