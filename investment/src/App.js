@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { calculateInvestmentScenarios, calculateRemainingPrincipal, calculateMortgagePayment } from './utils/calculations';
+import { calculateInvestmentScenarios, calculateMortgagePayment } from './utils/calculations';
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-US', {
@@ -122,14 +122,14 @@ function App() {
     }));
   };
 
-  const calculateResults = () => {
+  const calculateResults = React.useCallback(() => {
     const calculatedResults = calculateInvestmentScenarios(inputs);
     setResults(calculatedResults);
-  };
+  }, [inputs]);
 
   useEffect(() => {
     calculateResults();
-  }, [inputs]);
+  }, [calculateResults]);
 
   const chartData = results ? [
     {
