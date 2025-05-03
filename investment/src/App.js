@@ -29,19 +29,6 @@ const CalcDetail = ({ label, value, calculation }) => (
   </div>
 );
 
-// Add debounce helper function
-const debounce = (func, wait) => {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-};
-
 function App() {
   const [inputs, setInputs] = useState({
     initialCapital: 217000,
@@ -66,26 +53,16 @@ function App() {
 
   const [results, setResults] = useState(null);
   const [validationError, setValidationError] = useState('');
-  const [debouncedInputs, setDebouncedInputs] = useState(inputs);
 
-  // Debounced validation check
+  // Validation check
   useEffect(() => {
-    const requiredDownPayment = debouncedInputs.purchasePrice * debouncedInputs.downPaymentPercent;
-    if (debouncedInputs.initialCapital < requiredDownPayment) {
+    const requiredDownPayment = inputs.purchasePrice * inputs.downPaymentPercent;
+    if (inputs.initialCapital < requiredDownPayment) {
       setValidationError(`Initial capital must be at least ${formatCurrency(requiredDownPayment)} to cover the down payment`);
     } else {
       setValidationError('');
     }
-  }, [debouncedInputs]);
-
-  // Update debounced inputs
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedInputs(inputs);
-    }, 500); // 500ms delay
-
-    return () => clearTimeout(timer);
-  }, [inputs]);
+  }, [inputs.purchasePrice, inputs.downPaymentPercent, inputs.initialCapital]);
 
   const handleInputChange = (key, value) => {
     // Handle empty input

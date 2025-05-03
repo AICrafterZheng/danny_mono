@@ -74,8 +74,7 @@ export const calculateInvestmentScenarios = ({
   monthlyRent,
   imputedRent,
   stockInvestmentReturnPercent,
-  otherMonthlyExpenses,
-  capitalGainsTaxPercent
+  otherMonthlyExpenses
 }) => {
   // Calculate annual taxable income (rough estimate for tax bracket determination)
   const annualTaxableIncome = monthlyIncome * 12;
