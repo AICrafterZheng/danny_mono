@@ -1,6 +1,6 @@
 [build]
-command = "npm run build"
-output_dir = "build"
+command = "npm install && npm run build"
+pages_build_output_dir = "build"
 
 [site]
 bucket = "./build" 
